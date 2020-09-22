@@ -38,7 +38,7 @@ module top(
     );
     assign clk = clk_in;
     
-    single_cycle_cpu sccpu(clk_in,inst,reset,rdata,pc,addr,wdata,IM_R,DM_CS,DM_R,DM_W,alu_r);
+    flow_cpu fcpu(clk_in,inst,reset,rdata,pc,addr,wdata,IM_R,DM_CS,DM_R,DM_W,alu_r);
                 
     imem imemory(pc, IM_R, inst);
                 

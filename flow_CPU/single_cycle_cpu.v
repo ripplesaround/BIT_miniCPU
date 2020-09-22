@@ -5,7 +5,7 @@
 // 
 // Create Date: 2020/09/09 21:11:43
 // Design Name: 
-// Module Name: single_cycle_cpu
+// Module Name: flow_cpu
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module single_cycle_cpu(
+module flow_cpu(
     input clk,
     input [31:0] inst_F,
     input reset,
