@@ -40,7 +40,23 @@ module top(
     
     flow_cpu fcpu(clk_in,inst,reset,rdata,pc,addr,wdata,IM_R,DM_CS,DM_R,DM_W,alu_r);
                 
-    imem imemory(pc, IM_R, inst);
-                
-    dmem scdmem(clk_in,reset,DM_CS,DM_W,DM_R,addr,wdata,rdata);
+    // imem imemory(pc, IM_R, inst);
+    inst_ram inst_memory(
+        .a(pc[12:2]),
+        .clk(clk_in),
+        .spo(inst)
+        );
+    
+    // dmem scdmem(clk_in,reset,DM_CS,DM_W,DM_R,addr,wdata,rdata);
+    data_sram_0 data_memory(
+        .a(addr[12:2]),
+        .clk(clk_in),
+        .d(wdata),
+        .dpra(addr[12:2]),
+        .we( DM_W | DM_R ),
+
+        .dpo(rdata)
+    );
+
+
 endmodule

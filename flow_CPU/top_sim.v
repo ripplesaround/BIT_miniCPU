@@ -21,11 +21,11 @@
 
 
 module top_sim(
-    input clk_in,
-    input reset //
+    // input clk_in,
+    // input reset //
     );
-    // reg clk_in;
-    // reg reset;
+    reg clk_in;
+    reg reset;
     wire clk;
     wire [31:0]pc;
     wire [31:0]inst;
@@ -50,14 +50,14 @@ module top_sim(
 //    wire [4:0]m6_out;
 //    wire z;
     top test(clk_in,reset,clk,pc,inst,addr,rdata,wdata,IM_R,DM_CS,DM_R,DM_W,alu_r);
-    // initial
-    //     begin
-    //     clk_in = 0;
-    //     reset = 1;
-    //     #100;
-    //     reset=0;
-    //     forever
-    //         #100
-    //         clk_in = ~clk_in;
-    //     end
+    initial
+        begin
+        clk_in = 0;
+        reset = 1;
+        #100;
+        reset=0;
+        forever
+            #100
+            clk_in = ~clk_in;
+        end
 endmodule
