@@ -32,6 +32,7 @@ module pc(
     );
 
     always@(posedge pc_clk,posedge rst)
+    // always@(posedge pc_clk)
     begin
         if(rst)
             inst_out <= 32'b0;

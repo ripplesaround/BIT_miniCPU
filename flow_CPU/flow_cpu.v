@@ -47,13 +47,14 @@ module flow_cpu(
 
     wire RF_W_D, RF_W_E_alu_in, RF_W_E, RF_W_M, RF_W_W;
     wire M1_D,M1_E,M1_M,M2_D,M2_E,M2_M;
-    wire sign_ext,zero,signal;
+    wire sign_ext,zero;
+    wire signal_E,signal_M,signal_W;
     wire M3_0_D, M3_0_E, M3_0_M, M3_0_W ;
     wire M3_1_D, M3_1_E, M3_1_M, M3_1_W ;
     wire M4_0_D, M4_0_E;
     wire M5_D, M5_E, M5_M, M5_W;
     wire M6_D, M6_E;
-    wire [3:0] ALUC_D,ALUC_E;
+    wire [5:0] ALUC_D,ALUC_E;
     wire [31:0] mux1_out_F, mux2_out_E,mux2_out_M,mux2_out_F;
     wire [31:0] mux4_out_E, mux5_out_W, alu_out_E,alu_out_M,alu_out_W;
     wire [31:0] mux3_out_W;
@@ -86,7 +87,7 @@ module flow_cpu(
     flopr #(32)F1D(clk,reset,npc_out_F,npc_out_D);
     flopr #(32)F2D(clk,reset,inst_F,inst_D);
     // flopr #(32)F3D(clk,reset,join_out_F,join_out_D);
-     flopr #(32)F3D(clk,reset,pc_outF,pc_outD);
+    flopr #(32)F3D(clk,reset,pc_outF,pc_outD);
 
 
     // D to E
@@ -102,7 +103,7 @@ module flow_cpu(
     flopr #(1) D10E(clk,reset,M3_1_D,M3_1_E);
     flopr #(1) D11E(clk,reset,M5_D,M5_E);
     flopr #(1) D12E(clk,reset,M4_0_D,M4_0_E);
-    flopr #(4) D13E(clk,reset,ALUC_D,ALUC_E);
+    flopr #(6) D13E(clk,reset,ALUC_D,ALUC_E);
     flopr #(1) D14E(clk,reset,RF_W_D,RF_W_E);
     flopr #(1) D15E(clk,reset,DM_CS_D,DM_CS_E);
     flopr #(1) D16E(clk,reset,DM_W_D,DM_W_E);
@@ -134,6 +135,7 @@ module flow_cpu(
     flopr #(1) E16M(clk,reset,M2_E, M2_M);
     flopr #(32)E17M(clk,reset,ext18_out_E,ext18_out_M);
     flopr #(1) E18M(clk,reset,not_move_E,not_move_M);
+    flopr #(1) E19M(clk,reset,signal_E,signal_M);
 
     // M to W
     flopr #(5) M1W(clk,reset, mux6_out_M, mux6_out_W);
@@ -145,9 +147,10 @@ module flow_cpu(
     flopr #(32)M7W(clk,reset, mr_data_M, mr_data_W);
     flopr #(32)M8W(clk,reset,ext16_1_out_M, ext16_1_out_W);
     flopr #(1) M9W(clk,reset,not_move_M, not_move_W);
+    flopr #(1) M10W(clk,reset,signal_M,signal_W);
 
     // alu_out_E,mux6_out_E, RF_W_E, mr_data_M, mux6_out_M, RF_W_M,   
-    decoder cpu_decoder(inst_D,clk,zero,signal,           IM_R,M3_0_D,M3_1_D,M4_0_D, ALUC_D, shamt_D ,M2_D, M5_D, M6_D , RF_W_D, M1_D, DM_CS_D, DM_R_D, DM_W_D, sign_ext);
+    decoder cpu_decoder(inst_D,clk,zero,signal_W,           IM_R,M3_0_D,M3_1_D,M4_0_D, ALUC_D, shamt_D ,M2_D, M5_D, M6_D , RF_W_D, M1_D, DM_CS_D, DM_R_D, DM_W_D, sign_ext);
     //sign_ext 只在decode一个周期内使用，所以并不需要传递
 
     pc cpu_pc(clk,reset,mux2_out_F,join_out_D,M1_D,pc_outF);
@@ -157,7 +160,7 @@ module flow_cpu(
 
     // problem: ALU的第二个周期就执行了，应该在第三个周期
     // ans：只是再第一个周期会存在这种状况，在后续的周期应该就正常了dvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    alu cpu_alu(rf_rdata1_E,mux4_out_E,shamt_E,ALUC_E, alu_out_E,zero,signal,not_move_E);
+    alu cpu_alu(rf_rdata1_E,mux4_out_E,shamt_E,ALUC_E, alu_out_E,zero,signal_E,not_move_E);
     
     // Decoder阶段进行符号位拓展
     ext16 cpu_ext16(inst_D[15:0],sign_ext,ext16_out_D);
@@ -182,7 +185,8 @@ module flow_cpu(
     // Exectue阶段
     mux1_2 mux4(rf_rdata2_E, ext16_out_E, M4_0_E, mux4_out_E);    //虽然是3但实际上变成了2个，因为无符号拓展和符号拓展合并了
 
-    mux1_2 mux5(32'h00000000,32'h00000001,M5_W, mux5_out_W);
+    // mux1_2 mux5(32'h00000000,32'h00000001,M5_W, mux5_out_W);
+    mux1_2 mux5(32'h00000000,32'h00000001,signal_W, mux5_out_W);
 
     // wire [4:0]mux6_out = M6 ? inst_D[20:16]:inst_D[15:11];
     mux1_2 #(5) mux6(inst_E[15:11],inst_E[20:16], M6_E, mux6_out_E);

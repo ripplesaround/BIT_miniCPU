@@ -31,7 +31,7 @@ module decoder(
     output M3_1,
     output M4_0,
     // output M4_1,
-    output [3:0]ALUC,  //只有加和减法，留一位做拓展保险
+    output [5:0]ALUC,  //只有加和减法，留一位做拓展保险
     output [4:0]shamt,
     output M2,
     output M5,
@@ -46,21 +46,27 @@ module decoder(
     
     wire [5:0] func=inst[5:0];  
     wire [5:0] op=inst[31:26];
-    assign shamt = inst[10:6];
 
+    
     wire no_nop = |inst;
     wire r_type=~|op;
-    wire addiu,add,lw,sw,beq,j_i,lui,slti;
+    wire addiu,add,lw,sw,beq,j_i,lui,slti,ori,xori,andi,and_basic,or_basic,nor_basic,xor_basic;
+    wire nor_basic,sub,subu,sll,srl,sra,movn,movz,sllv,srlv;
 
     assign add=r_type &func[5]&~func[4]&~func[3]&~func[2]&~func[1]&~func[0];   
     // 可能还要完善符号位和溢出检测
+    assign addi = ~op[5]&~op[4]&op[3]&~op[2]&~op[1]&~op[0];    //001001
     assign addiu= ~op[5]&~op[4]&op[3]&~op[2]&~op[1]&op[0];    //001001
     assign lui=~op[5]&~op[4]&op[3]&op[2]&op[1]&op[0]; //001111
     assign lw=op[5]&~op[4]&~op[3]&~op[2]&op[1]&op[0];
     assign sw=op[5]&~op[4]&op[3]&~op[2]&op[1]&op[0];
     assign beq=~op[5]&~op[4]&~op[3]&op[2]&~op[1]&~op[0];
     assign j_i=~op[5]&~op[4]&~op[3]&~op[2]&op[1]&~op[0]; 
+
+    assign slt = r_type &func[5]&~func[4]&func[3]&~func[2]&func[1]&~func[0];
+    assign sltu = r_type &func[5]&~func[4]&func[3]&~func[2]&func[1]&func[0];
     assign slti = ~op[5]&~op[4]&op[3]&~op[2]&op[1]&~op[0]; 
+    assign sltiu = ~op[5]&~op[4]&op[3]&~op[2]&op[1]&op[0]; 
 
     //添加的指令集
     assign ori = ~op[5]&~op[4]&op[3]&op[2]&~op[1]&op[0]; 
@@ -70,46 +76,62 @@ module decoder(
     assign or_basic = r_type &func[5]&~func[4]&~func[3]&func[2]&~func[1]&func[0];         //00000 100101
     assign xor_basic = r_type &func[5]&~func[4]&~func[3]&func[2]&func[1]&~func[0];          //000000 100110
     assign nor_basic = r_type &func[5]&~func[4]&~func[3]&func[2]&func[1]&func[0];
-    assign sub=r_type &func[5]&~func[4]&~func[3]&~func[2]&func[1]&~func[0];
-    assign sll=r_type &~func[5]&~func[4]&~func[3]&~func[2]&~func[1]&~func[0] & no_nop;
-    assign srl=r_type &~func[5]&~func[4]&~func[3]&~func[2]&func[1]&~func[0] ;   
+    assign subu=r_type &func[5]&~func[4]&~func[3]&~func[2]&func[1]&func[0];
+    assign sub =r_type &func[5]&~func[4]&~func[3]&~func[2]&func[1]&~func[0];
+    
+    // 移位指令
+    assign sll = r_type &~func[5]&~func[4]&~func[3]&~func[2]&~func[1]&~func[0] & no_nop;
+    assign srl = r_type &~func[5]&~func[4]&~func[3]&~func[2]&func[1]&~func[0] ;   
+    assign sra = r_type &~func[5]&~func[4]&~func[3]&~func[2]&func[1]&func[0] ;   
+    
+    //转移指令
     assign movn = r_type &~func[5]&~func[4]&func[3]&~func[2]&func[1]&func[0];
     assign movz = r_type &~func[5]&~func[4]&func[3]&~func[2]&func[1]&~func[0];
+    
 
     //未检测
-    assign sllv=r_type &~func[5]&~func[4]&~func[3]&func[2]&~func[1]&~func[0] ;   
-    assign srlv=r_type &~func[5]&~func[4]&~func[3]&func[2]&func[1]&func[0] ;   
+    assign sllv = r_type &~func[5]&~func[4]&~func[3]&func[2]&~func[1]&~func[0] ;   
+    assign srlv = r_type &~func[5]&~func[4]&~func[3]&func[2]&func[1]&~func[0] ;   
+    assign srav = r_type &~func[5]&~func[4]&~func[3]&func[2]&func[1]&func[0] ; 
 
     
+    assign shamt = inst[10:6];
 
     assign IM_R=1;
     
-    assign RF_W=addiu|lw|lui|add|slti | ori | xori | andi | and_basic | or_basic | xor_basic | sub | nor_basic|sll|srl|sllv|srlv|movn|movz;   //需要写回regfile
+    assign RF_W=addiu|lw|lui|add|slti | ori | xori | andi | and_basic | or_basic | xor_basic | subu | nor_basic|sll|srl|sllv|srlv|movn|movz|sra|addi|sub|slt|sltu|sltiu;   //需要写回regfile
 
     assign DM_CS=lw|sw;
     assign DM_R=lw;
     assign DM_W=sw;
 
-    assign ALUC[3] = sll|srl|movn|movz;
-    assign ALUC[2] = ori | xori  | xor_basic| or_basic | nor_basic |movn | movz;         //
-    assign ALUC[1] = add | xori  | xor_basic| andi | and_basic |movz;        //进行溢出检测
-    assign ALUC[0] = beq | slti | andi | and_basic | sub | nor_basic |srl;
+    //addu addiu op为0
+    assign ALUC[5] = 1'b0;
+    assign ALUC[4] = 1'b0;
+    assign ALUC[3] = sll|srl| movn |movz| sra |srav;
+    assign ALUC[2] = ori | xori  | xor_basic| or_basic | nor_basic |movn | movz|sub|srav|slt|slti;         
+    assign ALUC[1] = add | xori  | xor_basic| andi | and_basic |movz |sra|sub|srav| addi|slt|slti;        
+    assign ALUC[0] = beq | slti | andi | and_basic | subu | nor_basic |srl|sub|srav|slt |sltu|sltiu;
 
     // 决定是否跳转 
-    assign M1=addiu|add|lw|sw|beq|lui|slti|ori|andi|xori|and_basic|or_basic|xor_basic|sub|nor_basic|sll|srl|movn|movz;
+    assign M1=addiu|add|lw|sw|beq|lui|slti|ori|andi|xori|and_basic|or_basic|xor_basic|subu|nor_basic|sll|srl|movn|movz|sra|addi|sub|sllv|srlv|srav|slt|sltu|sltiu;
     //是否应该做调整 初始值不是零
     
-    assign M3_0=lui| slti ;     //10 lw 01 lui 00 add,addiu,ori 11 slti
-    assign M3_1=lw | slti ;      //00 就是直接读取alu的数据
+    assign M3_0=lui| slti |slt|sltu|sltiu;     //10 lw 01 lui 00 add,addiu,ori 11 slti
+    assign M3_1=lw | slti |slt|sltu|sltiu;      //00 就是直接读取alu的数据
     
     //assign M4_0=addiu;    //01
     //assign M4_1=lw|sw;  //10
-    assign M4_0=lw|sw|addiu | slti | ori | xori | andi;  // beq add 走0
+    assign M4_0=lw|sw|addiu | slti | ori | xori | andi |addi|sltiu;  // beq add 走0
     assign M2= beq & zero;   // 
-    assign M6 = lui|addiu|lw | slti | ori | xori | andi;
+    //和立即数有关
+    assign M6 = lui|addiu|lw | slti | ori | xori | andi | addi|sltiu;
+
+    // 是否改为由alu直接送出signal信号
     assign M5 = signal;
 
-    assign sign_ext= lw | sw |slti;
+    //addi
+    assign sign_ext= lw | sw |slti | addi|sltiu;
 
 endmodule
 
