@@ -34,8 +34,12 @@ module decoder(
     output [5:0]ALUC,  //只有加和减法，留一位做拓展保险
     output [4:0]shamt,
     output M2,
+    output M2_1,
     output M5,
     output M6,
+    output M6_1,
+    output M7,
+    output [2:0] M8,
     output RF_W,
     output M1,
     output DM_CS,
@@ -47,21 +51,31 @@ module decoder(
     wire [5:0] func=inst[5:0];  
     wire [5:0] op=inst[31:26];
 
-    
+    wire jal;
     wire no_nop = |inst;
     wire r_type=~|op;
-    wire addiu,add,lw,sw,beq,j_i,lui,slti,ori,xori,andi,and_basic,or_basic,nor_basic,xor_basic;
+    wire addiu,add,lw,sw,beq,j_i,lui,slti,ori,xori,andi,and_basic,or_basic,xor_basic;
     wire nor_basic,sub,subu,sll,srl,sra,movn,movz,sllv,srlv;
+    
 
     assign add=r_type &func[5]&~func[4]&~func[3]&~func[2]&~func[1]&~func[0];   
     // 可能还要完善符号位和溢出检测
     assign addi = ~op[5]&~op[4]&op[3]&~op[2]&~op[1]&~op[0];    //001001
     assign addiu= ~op[5]&~op[4]&op[3]&~op[2]&~op[1]&op[0];    //001001
     assign lui=~op[5]&~op[4]&op[3]&op[2]&op[1]&op[0]; //001111
+
     assign lw=op[5]&~op[4]&~op[3]&~op[2]&op[1]&op[0];
+    assign lb=op[5]&~op[4]&~op[3]&~op[2]&~op[1]&~op[0];
+    assign lh=op[5]&~op[4]&~op[3]&~op[2]&~op[1]&op[0];
+    assign lbu=op[5]&~op[4]&~op[3]&op[2]&~op[1]&~op[0];
+    assign lhu=op[5]&~op[4]&~op[3]&op[2]&~op[1]&op[0];
+    
     assign sw=op[5]&~op[4]&op[3]&~op[2]&op[1]&op[0];
+    assign sb=op[5]&~op[4]&op[3]&~op[2]&~op[1]&~op[0];
+    assign sh=op[5]&~op[4]&op[3]&~op[2]&~op[1]&op[0];
+
     assign beq=~op[5]&~op[4]&~op[3]&op[2]&~op[1]&~op[0];
-    assign j_i=~op[5]&~op[4]&~op[3]&~op[2]&op[1]&~op[0]; 
+    assign bne=~op[5]&~op[4]&~op[3]&op[2]&~op[1]&op[0];
 
     assign slt = r_type &func[5]&~func[4]&func[3]&~func[2]&func[1]&~func[0];
     assign sltu = r_type &func[5]&~func[4]&func[3]&~func[2]&func[1]&func[0];
@@ -88,18 +102,21 @@ module decoder(
     assign movn = r_type &~func[5]&~func[4]&func[3]&~func[2]&func[1]&func[0];
     assign movz = r_type &~func[5]&~func[4]&func[3]&~func[2]&func[1]&~func[0];
     
-
-    //未检测
     assign sllv = r_type &~func[5]&~func[4]&~func[3]&func[2]&~func[1]&~func[0] ;   
     assign srlv = r_type &~func[5]&~func[4]&~func[3]&func[2]&func[1]&~func[0] ;   
     assign srav = r_type &~func[5]&~func[4]&~func[3]&func[2]&func[1]&func[0] ; 
 
-    
+    //跳转指令
+    assign j_i= ~op[5]&~op[4]&~op[3]&~op[2]&op[1]&~op[0]; 
+    assign jr = r_type &~func[5]&~func[4]&func[3]&~func[2]&~func[1]&~func[0] ; 
+    assign jal = ~op[5]&~op[4]&~op[3]&~op[2]&op[1]&op[0];
+    assign jalr = r_type &~func[5]&~func[4]&func[3]&~func[2]&~func[1]&func[0] ; 
+
     assign shamt = inst[10:6];
 
     assign IM_R=1;
     
-    assign RF_W=addiu|lw|lui|add|slti | ori | xori | andi | and_basic | or_basic | xor_basic | subu | nor_basic|sll|srl|sllv|srlv|movn|movz|sra|addi|sub|slt|sltu|sltiu;   //需要写回regfile
+    assign RF_W=addiu|lw|lui|add|slti | ori | xori | andi | and_basic | or_basic | xor_basic | subu | nor_basic|sll|srl|sllv|srlv|movn|movz|sra|addi|sub|slt|sltu|sltiu|bne|jal|jalr;   //需要写回regfile
 
     assign DM_CS=lw|sw;
     assign DM_R=lw;
@@ -107,32 +124,45 @@ module decoder(
 
     //addu addiu op为0
     assign ALUC[5] = 1'b0;
-    assign ALUC[4] = 1'b0;
+    assign ALUC[4] = jal|jalr;
     assign ALUC[3] = sll|srl| movn |movz| sra |srav;
     assign ALUC[2] = ori | xori  | xor_basic| or_basic | nor_basic |movn | movz|sub|srav|slt|slti;         
     assign ALUC[1] = add | xori  | xor_basic| andi | and_basic |movz |sra|sub|srav| addi|slt|slti;        
-    assign ALUC[0] = beq | slti | andi | and_basic | subu | nor_basic |srl|sub|srav|slt |sltu|sltiu;
+    assign ALUC[0] = beq | slti | andi | and_basic | subu | nor_basic |srl|sub|srav|slt |sltu|sltiu|bne;
 
-    // 决定是否跳转 
-    assign M1=addiu|add|lw|sw|beq|lui|slti|ori|andi|xori|and_basic|or_basic|xor_basic|subu|nor_basic|sll|srl|movn|movz|sra|addi|sub|sllv|srlv|srav|slt|sltu|sltiu;
+    // 决定是否跳转 (在decode阶段，换言之，jr在ex阶段跳转所以不用)
+    assign M1=addiu|add|lw|sw|beq|lui|slti|ori|andi|xori|and_basic|or_basic|xor_basic|subu|nor_basic|sll|srl|movn|movz|sra|addi|sub|sllv|srlv|srav|slt|sltu|sltiu|jr|jalr;
     //是否应该做调整 初始值不是零
     
     assign M3_0=lui| slti |slt|sltu|sltiu;     //10 lw 01 lui 00 add,addiu,ori 11 slti
-    assign M3_1=lw | slti |slt|sltu|sltiu;      //00 就是直接读取alu的数据
+    assign M3_1=lw |lbu|lhu|lb|lh | slti |slt|sltu|sltiu;      //00 就是直接读取alu的数据
     
+    // load指令族
+    // 000 lw
+    assign M8[2] = lhu|lbu; //无符号数
+    assign M8[1] = lh|lhu;
+    assign M8[0] = lb|lbu;
+
     //assign M4_0=addiu;    //01
     //assign M4_1=lw|sw;  //10
     assign M4_0=lw|sw|addiu | slti | ori | xori | andi |addi|sltiu;  // beq add 走0
-    assign M2= beq & zero;   // 
-    //和立即数有关
+    // assign M2= beq & zero;   // 
+    assign M2 = beq;
+    assign M2_1 = bne;
+    //和立即数和写入地址有关
     assign M6 = lui|addiu|lw | slti | ori | xori | andi | addi|sltiu;
+    assign M6_1 = jal|jalr;
 
     // 是否改为由alu直接送出signal信号
     assign M5 = signal;
 
+    //jr jalr
+    assign M7 = jr|jalr;
+
     //addi
     assign sign_ext= lw | sw |slti | addi|sltiu;
 
+    
 endmodule
 
 

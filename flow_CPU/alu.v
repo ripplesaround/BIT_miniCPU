@@ -26,6 +26,7 @@ module alu(
     input [4:0] shamt,
     input [5:0] aluc,   //和之前的一样
     // input RF_W_in,  //movn指令
+    input [31:0] current_pc,    //这条指令的pc
 
     // output reg RF_W_out,
     output [31:0] r,
@@ -189,6 +190,22 @@ module alu(
             have_singal = 1'b0;
         end
         
+        else if (aluc == 6'b010000) begin
+            //jal jalr
+            r_1 = current_pc + 32'd8;
+            not_move_1 = 1'b0;
+            overflow_1 = 1'b0;
+            have_singal = 1'b0;
+        end
+
+        // else if (aluc == 6'b010001) begin
+        //     //jalr
+        //     r_1 = 32'h0;
+        //     not_move_1 = 1'b0;
+        //     overflow_1 = 1'b0;
+        //     have_singal = 1'b0;
+        // end
+
         else begin
             not_move_1 = 1'b0;
             r_1 = 32'h0;
@@ -201,5 +218,5 @@ module alu(
     assign overflow = overflow_1;
     assign not_move = not_move_1;
     assign zero = r ? 1'b0:1'b1;
-    assign signal <= (((have_singal)&r[31]==1'b0)| (~have_singal&$unsigned(r)>0)) ? 1'b0:1'b1;  //结果符号
+    assign signal = (((have_singal)&r[31]==1'b0)| (~have_singal&$unsigned(r)>0)) ? 1'b0:1'b1;  //结果符号
 endmodule

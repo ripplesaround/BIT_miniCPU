@@ -26,18 +26,25 @@ module pc(
     input [31:0] inst_in,
     input [31:0] jump,
     input control_jump,
+    input [31:0] rs,
+    input control_jr,
 
     output reg [31:0] inst_out
     // 实现复位功能
     );
 
-    always@(posedge pc_clk,posedge rst)
-    // always@(posedge pc_clk)
+    //这一块还需要再仔细看看，为什么加入rst后就会有一个周期的凉凉
+    // always@(posedge pc_clk,posedge rst)
+    always@(posedge pc_clk)
     begin
         if(rst)
             inst_out <= 32'b0;
-        else if(~control_jump)
+        else if(~control_jump)begin
             inst_out <= jump; 
+        end
+        else if(control_jr)begin
+            inst_out <= rs;
+        end
         else
             inst_out <= inst_in; 
     end

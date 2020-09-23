@@ -59,16 +59,16 @@ module top(
     //     .spo(inst)
     //     );
     
-    // dmem scdmem(clk_in,reset,DM_CS,DM_W,DM_R,addr,wdata,rdata);
-    data_sram_0 data_memory(
-        .a(addr[12:2]),
-        // .clk(clk_in),
-        .d(wdata),
-        .dpra(addr[12:2]),
-        .we( DM_W | DM_R| DM_CS ),
+    dmem scdmem(clk_in,reset,DM_CS,DM_W,DM_R,addr,wdata,rdata);
+    // data_sram_0 data_memory(
+    //     .a(addr[12:2]),
+    //     // .clk(clk_in),
+    //     .d(wdata),
+    //     .dpra(addr[12:2]),
+    //     .we( DM_W | DM_R| DM_CS ),
 
-        .dpo(rdata)
-    );
+    //     .dpo(rdata)
+    // );
 
 
 endmodule

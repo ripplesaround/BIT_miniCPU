@@ -33,10 +33,12 @@ module dmem(
     );
 
     reg [31:0] RAM [2047:0];
-    assign rdata = (CS & DM_R) ? RAM[addr[31:2]]:32'h0;
+    // assign rdata = (CS & DM_R) ? RAM[addr[31:2]]:32'h0;
+    assign rdata = (CS & DM_R) ? RAM[addr]:32'h0;
 
     always @(posedge clk) begin
         if(CS & DM_W)
-            RAM[addr[31:2]] <= wdata; 
+            // RAM[addr[31:2]] <= wdata; 
+            RAM[addr] <= wdata; 
     end
 endmodule
