@@ -37,24 +37,24 @@ module mux1_2#(parameter width = 32)(
     end
 endmodule
 
-module mux1_2_E#(parameter width = 32)(
-    input [width-1:0] a,
-    input [width-1:0] b,
-    input control,
-    input enable,
+// module mux1_2_E#(parameter width = 32)(
+//     input [width-1:0] a,
+//     input [width-1:0] b,
+//     input control,
+//     input enable,
     
-    output reg [width-1:0] r
-    );
+//     output reg [width-1:0] r
+//     );
 
-    always @* begin
-    if(enable) begin
-        case(control)
-            1'b0: r=a;
-            1'b1: r=b;
-        endcase
-    end
-    end
-endmodule
+//     always @* begin
+//     if(enable) begin
+//         case(control)
+//             1'b0: r=a;
+//             1'b1: r=b;
+//         endcase
+//     end
+//     end
+// endmodule
 
 module mux2_4#(parameter width = 32)(
     input [width-1:0] a,

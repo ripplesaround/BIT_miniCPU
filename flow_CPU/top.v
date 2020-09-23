@@ -22,20 +22,32 @@
 
 module top(
     input clk_in,
-    input reset,
+    input reset, //
 
-    output clk,
-    output [31:0]pc,
-    output [31:0]inst,
-    output [31:0]addr,
-    output [31:0]rdata,
-    output [31:0]wdata,
-    output IM_R,
-    output DM_CS,
-    output DM_R,
-    output DM_W,
-    output [31:0]alu_r     
+    output clk  //
+    // output [31:0]pc,
+    // output [31:0]inst,
+    // output [31:0]addr,
+    // output [31:0]rdata,
+    // output [31:0]wdata,
+    // output IM_R,
+    // output DM_CS,
+    // output DM_R,
+    // output DM_W,
+    // output [31:0]alu_r     
     );
+    // reg clk;
+    wire [31:0]pc;
+    wire [31:0]inst;
+    wire [31:0]addr;
+    wire [31:0]rdata;
+    wire [31:0]wdata;
+    wire IM_R;
+    wire DM_CS;
+    wire DM_R;
+    wire DM_W;
+    wire [31:0]alu_r;
+
     assign clk = clk_in;
     
     flow_cpu fcpu(clk_in,inst,reset,rdata,pc,addr,wdata,IM_R,DM_CS,DM_R,DM_W,alu_r);

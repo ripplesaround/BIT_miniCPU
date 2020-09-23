@@ -36,6 +36,15 @@ module flow_cpu(
     output [31:0]alu_r
     );
 
+    // wire [31:0] pc_outF,
+    // wire [31:0] maddr,
+    // wire [31:0] mwdata,
+    // wire IM_R,
+    // wire DM_CS_M,
+    // wire DM_R_M,
+    // wire DM_W_M,
+    // wire [31:0]alu_r
+
     wire RF_W_D, RF_W_E_alu_in, RF_W_E, RF_W_M, RF_W_W;
     wire M1_D,M1_E,M1_M,M2_D,M2_E,M2_M;
     wire sign_ext,zero,signal;

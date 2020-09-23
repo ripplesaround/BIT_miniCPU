@@ -35,22 +35,46 @@ module alu(
     );
     reg [31:0] r_1;
     reg not_move_1;
-    always@* begin
-        case(aluc)
-        4'b0000: r_1 = a+b;
-        4'b0010: r_1 = a+b;  //add 还要加溢出判断
-        4'b0001: r_1 = a-b;  //beq stli
-        4'b0100: r_1 = a|b;  //ori
-        4'b0110: r_1 = a^b;  //xori
-        4'b0011: r_1 = a&b;  //andi
-        4'b0101: r_1 = ~(a|b);   //nor
-        4'b1000: r_1 = b<<shamt;
-        default:;
-        endcase
-    end
+    // always@* begin
+    //     case(aluc)
+    //     4'b0000: r_1 = a+b;
+    //     4'b0010: r_1 = a+b;  //add 还要加溢出判断
+    //     4'b0001: r_1 = a-b;  //beq stli
+    //     4'b0100: r_1 = a|b;  //ori
+    //     4'b0110: r_1 = a^b;  //xori
+    //     4'b0011: r_1 = a&b;  //andi
+    //     4'b0101: r_1 = ~(a|b);   //nor
+    //     4'b1000: r_1 = b<<shamt;
+    //     default:;
+    //     endcase
+    // end
     
     always @ (*) begin
-        if (aluc == 4'b1110) begin
+        if (aluc == 4'b0000) begin
+            r_1 = a+b;
+        end
+        else if (aluc == 4'b0010) begin
+            r_1 = a+b;
+        end
+        else if (aluc == 4'b0001) begin
+            r_1 = a-b;
+        end
+        else if (aluc == 4'b0100) begin
+            r_1 = a|b;
+        end
+        else if (aluc == 4'b0110) begin
+            r_1 = a^b;
+        end
+        else if (aluc == 4'b0011) begin
+            r_1 = a&b;
+        end
+        else if (aluc == 4'b0101) begin
+            r_1 = ~(a|b); 
+        end
+        else if (aluc == 4'b1000) begin
+            r_1 = b<<shamt;
+        end
+        else if (aluc == 4'b1110) begin
             if(b == 32'b00000000) begin
                 // RF_W_out <= RF_W_in;
                 not_move_1 = 1'b0;
@@ -76,6 +100,7 @@ module alu(
         end
         else begin
             not_move_1 = 1'b0;
+            r_1 = 32'h0;
         end
     end
 
