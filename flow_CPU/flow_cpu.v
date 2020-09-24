@@ -199,8 +199,9 @@ module flow_cpu(
     //branch
 
     //不同粒度的load指令
-    ext16 mem_ext16(mr_data_M[15:0],M8_M[2],mr_data_M_lh_lhu);
-    ext24 mem_ext24(mr_data_M[7:0],M8_M[2],mr_data_M_lb_lbu);
+    //符号位可以认为是M8_M[2]，为1的时候是无符号指令
+    ext16 mem_ext16(mr_data_M[15:0],~M8_M[2],mr_data_M_lh_lhu);
+    ext24 mem_ext24(mr_data_M[7:0],~M8_M[2],mr_data_M_lb_lbu);
     mux2_4 mux7(
         .a(mr_data_M),
         .b(mr_data_M_lb_lbu),
